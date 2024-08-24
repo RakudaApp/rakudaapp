@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF圧縮ツール</title>
+    <style>
+        #saveButton, #shareButton {
+            background-color: #ccc;
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            cursor: not-allowed;
+        }
+        #saveButton.active, #shareButton.active {
+            background-color: #007bff;
+            cursor: pointer;
+        }
+        #saveButton {
+            display: inline-block;
+        }
+        #shareButton {
+            display: inline-block;
+        }
+        #sizeComparison {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-start;
+            gap: 20px;
+        }
+        #compressedSize {
+            color: #2e8b57;
+        }
+        #aspectRatioWarning {
+            margin-top: 20px;
+            color: #ff0000;
+        }
+        .quality-slider {
+            margin-top: 10px;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <label for="pdfUpload">PDFファイルを選択</label>
+	<input type="file" id="pdfUpload" accept="application/pdf" title="PDFファイルを選択してください">
+    <label for="widthSelect">横幅:</label>
+    <select id="widthSelect">
+        <option value="800">800px</option>
+        <option value="1280" selected>1280px</option>
+        <option value="1600">1600px</option>
+        <option value="original">オリジナル</option>
+    </select>
+    <div class="checkbox-container">
+        <input type="checkbox" id="jpgConversion" checked>
+        <label for="jpgConversion">Jpg化</label>
+    </div>
+    <div class="quality-slider">
+        <label for="quality">画質:</label>
+        <input type="range" id="quality" min="0" max="100" value="70">
+        <span id="qualityValue">70</span>
+    </div>
+    <div class="button-container">
+        <button id="compressButton">圧縮する</button>
+        <button id="saveButton" disabled>保存する</button>
+        <button id="shareButton" disabled>共有する</button>
+    </div>
+    <div id="sizeComparison">
+        <div>
+            圧縮前サイズ: <span id="originalSize"></span>
+        </div>
+        <div>
+            圧縮後サイズ: <span id="compressedSize"></span>
+        </div>
+    </div>
+    <div id="aspectRatioWarning"></div>
+
+    <!-- pdf.js と pdf-lib の読み込み -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.5.141/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.5.141/pdf.worker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pica"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver"></script>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.5.141/pdf.worker.min.js';
+
+        // 画質スライダーの値を表示する
+        document.getElementById('quality').addEventListener('input', (event) => {
+            document.getElementById('qualityValue').textContent = event.target.value;
+        });
+
+        document.getElementById('compressButton').addEventListener('click', async () => {
+            const fileInput = document.getElementById('pdfUpload');
+            const widthSelect = document.getElementById('widthSelect');
+            const selectedWidth = widthSelect.value;
+            const jpgConversion = document.getElementById('jpgConversion').checked;
+            const quality = document.getElementById('quality').value / 100;
+
+            if (fileInput.files.length === 0) {
+                alert('PDFファイルを選択してください。');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            if (file.size === 0) {
+                alert('PDFファイルが空です。');
+                return;
+            }
+
+            const originalSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            const originalSizeKB = (file.size / 1024).toFixed(2);
+            document.getElementById('originalSize').textContent = `${originalSizeMB}MB (${originalSizeKB}KB)`;
+
+            try {
+                const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+                const numPages = pdf.numPages;
+                console.log(`Total pages: ${numPages}`);
+
+                const pdfDoc = await PDFLib.PDFDocument.create();
+                const aspectRatioErrors = [];
+
+                let baseAspectRatio;
+
+                for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 1.0 });
+                    const originalWidth = viewport.width;
+                    const originalHeight = viewport.height;
+
+                    let canvasWidth = originalWidth;
+                    let canvasHeight = originalHeight;
+
+                    if (selectedWidth !== 'original') {
+                        canvasWidth = parseInt(selectedWidth);
+                        const aspectRatio = originalHeight / originalWidth;
+                        canvasHeight = canvasWidth * aspectRatio;
+                    }
+
+                    if (pageNum === 2) {
+                        baseAspectRatio = originalHeight / originalWidth;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = canvasWidth;
+                    canvas.height = canvasHeight;
+
+                    const scale = canvasWidth / originalWidth;
+                    await page.render({
+                        canvasContext: context,
+                        viewport: page.getViewport({ scale: scale })
+                    }).promise;
+
+                    let imageBlob = await new Promise((resolve) => {
+                        canvas.toBlob(resolve, jpgConversion ? 'image/jpeg' : 'image/png', quality);
+                    });
+
+                    const imageArrayBuffer = await imageBlob.arrayBuffer();
+                    const image = jpgConversion
+                        ? await pdfDoc.embedJpg(imageArrayBuffer)
+                        : await pdfDoc.embedPng(imageArrayBuffer);
+
+                    const newPage = pdfDoc.addPage([canvasWidth, canvasHeight]);
+                    newPage.drawImage(image, { x: 0, y: 0, width: canvasWidth, height: canvasHeight });
+
+                    if (baseAspectRatio && pageNum !== 2) {
+                        const currentAspectRatio = originalHeight / originalWidth;
+                        if (Math.abs(currentAspectRatio - baseAspectRatio) > 0.01) {
+                            aspectRatioErrors.push(pageNum);
+                        }
+                    }
+                }
+
+                const pdfBytes = await pdfDoc.save();
+                const compressedFileSize = pdfBytes.byteLength;
+                const compressedSizeMB = (compressedFileSize / (1024 * 1024)).toFixed(2);
+                const compressedSizeKB = (compressedFileSize / 1024).toFixed(2);
+                document.getElementById('compressedSize').textContent = `${compressedSizeMB}MB (${compressedSizeKB}KB)`;
+
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const saveButton = document.getElementById('saveButton');
+                const shareButton = document.getElementById('shareButton');
+
+                saveButton.classList.add('active');
+                saveButton.disabled = false;
+                saveButton.addEventListener('click', () => {
+                    saveAs(blob, 'compressed.pdf');
+                });
+
+                shareButton.classList.add('active');
+                shareButton.disabled = false;
+                shareButton.addEventListener('click', () => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'compressed.pdf';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+
+                const aspectRatioWarning = document.getElementById('aspectRatioWarning');
+                if (aspectRatioErrors.length > 0) {
+                    aspectRatioWarning.textContent = `サイズが統一されていません。 (${aspectRatioErrors.join(', ')})`;
+                } else {
+                    aspectRatioWarning.textContent = '';
+                }
+
+            } catch (error) {
+                console.error("Error processing PDF:", error);
+                alert('PDF処理中にエラーが発生しました。');
+            }
+        });
+    </script>
+</body>
+</html>
