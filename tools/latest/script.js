@@ -95,34 +95,11 @@ document.getElementById('compressButton').addEventListener('click', async () => 
 
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         const saveButton = document.getElementById('saveButton');
-        const shareButton = document.getElementById('shareButton');
 
         saveButton.classList.add('active');
         saveButton.disabled = false;
         saveButton.addEventListener('click', () => {
             saveAs(blob, 'compressed.pdf');
-        });
-
-        shareButton.classList.add('active');
-        shareButton.disabled = false;
-        shareButton.addEventListener('click', async () => {
-            const url = URL.createObjectURL(blob);
-            try {
-                await navigator.share({
-                    title: 'Compressed PDF',
-                    text: 'Here is the compressed PDF file.',
-                    url: url
-                });
-                URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error('Sharing failed:', error);
-                // Fallback if sharing fails
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'compressed.pdf';
-                a.click();
-                URL.revokeObjectURL(url);
-            }
         });
 
         const aspectRatioWarning = document.getElementById('aspectRatioWarning');
