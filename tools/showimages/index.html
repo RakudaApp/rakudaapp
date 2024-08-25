@@ -3,60 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画像表示ツール</title>
-    <style>
-        body {
-            background-color: black;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        h1 {
-            text-align: center;
-            margin: 20px 0;
-        }
-        input[type="text"]#urlInput {
-            padding: 10px;
-            font-size: 18px;
-            margin: 5px;
-            width: 80%;
-            max-width: 400px;
-            box-sizing: border-box;
-        }
-        input[type="text"]#numInput {
-            padding: 10px;
-            font-size: 18px;
-            margin: 5px;
-            width: 60px;
-            box-sizing: border-box;
-        }
-        button {
-            padding: 12px 20px;
-            font-size: 18px;
-            margin: 5px;
-            cursor: pointer;
-        }
-        #images {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 2px;
-        }
-        #images img {
-            margin: 2px;
-            width: 70px;
-            height: auto;
-            box-sizing: border-box;
-        }
-    </style>
+    <title>リンク表示ツール</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <h1>画像一覧表示</h1>
-    <div style="text-align: center;">
+    <div class="input-container">
         <input type="text" id="urlInput" placeholder="画像URLを入力">
-        <input type="text" id="numInput" placeholder="枚数">
+        <input type="text" id="numInput" placeholder="枚数" pattern="\d*" inputmode="numeric">
         <button id="displayButton">表示</button>
     </div>
-    <div id="images"></div>
+    <div id="links"></div>
     <script src="script.js"></script>
 </body>
 </html>
