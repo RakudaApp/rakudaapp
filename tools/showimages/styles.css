@@ -1,0 +1,71 @@
+body {
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.input-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+input[type="text"]#urlInput {
+    padding: 10px;
+    font-size: 18px;
+    margin: 5px;
+    width: 60%;
+    max-width: 400px;
+    box-sizing: border-box;
+}
+
+input[type="text"]#numInput {
+    padding: 10px;
+    font-size: 18px;
+    margin: 5px;
+    width: 60px;
+    box-sizing: border-box;
+    text-align: center;
+    ime-mode: disabled; /* 日本語入力を無効化 */
+}
+
+button {
+    padding: 12px 20px;
+    font-size: 18px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.input-container > * {
+    vertical-align: middle;
+}
+
+#links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 3px;
+}
+
+.link-item a {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 3px;
+    color: #ffffff;
+    background-color: #007bff; /* ボタンのような青色 */
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.link-item a:visited {
+    background-color: #28a745; /* 訪問済みの明るい緑 */
+}
+
+.link-item a:hover {
+    background-color: #0056b3; /* ホバー時の暗い青色 */
+}
