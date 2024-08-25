@@ -1,36 +1,44 @@
-document.getElementById('displayButton').addEventListener('click', () => {
-    const urlInput = document.getElementById('urlInput').value;
-    const numInput = document.getElementById('numInput').value || 30;
-    const linksContainer = document.getElementById('links');
-    linksContainer.innerHTML = ''; // コンテナをクリア
+document.getElementById('displayButton').addEventListener('click', function() {
+    const urlInput = document.getElementById('urlInput').value.trim();
+    const numInput = parseInt(document.getElementById('numInput').value.trim(), 10) || 30;
 
-    let urls = [];
-    let baseUrl = urlInput;
-    let fileNamePattern = /\/(\d+)\.([a-zA-Z]+)$/;
-
-    // ファイル名部分を1に変更し、URLの配列を生成
-    for (let i = 1; i <= numInput; i++) {
-        let newUrl = baseUrl.replace(fileNamePattern, `/${i}.$2`);
-        urls.push(newUrl);
+    if (!urlInput) {
+        alert('画像URLを入力してください');
+        return;
     }
 
-    // リンク要素を作成して表示
+    const linksContainer = document.getElementById('links');
+    if (!linksContainer) {
+        console.error('Links container not found');
+        return;
+    }
+    linksContainer.innerHTML = '';
+
+    const urls = [];
+    const baseUrl = urlInput.substring(0, urlInput.lastIndexOf('/') + 1);
+    const fileName = urlInput.substring(urlInput.lastIndexOf('/') + 1);
+    const fileNameParts = fileName.match(/(\d+)(\.[a-z]+)$/); // 数字と拡張子を分ける
+    if (!fileNameParts) {
+        alert('ファイル名が無効です');
+        return;
+    }
+    const fileNamePrefix = fileNameParts[1];
+    const fileNameExtension = fileNameParts[2];
+
+    for (let i = 1; i <= numInput; i++) {
+        urls.push(baseUrl + (parseInt(fileNamePrefix, 10) + i - 1) + fileNameExtension);
+    }
+
     urls.forEach(url => {
-        let linkItem = document.createElement('div');
+        const linkItem = document.createElement('div');
         linkItem.className = 'link-item';
-        
-        let link = document.createElement('a');
+
+        const link = document.createElement('a');
         link.href = url;
-        link.textContent = url.substring(url.lastIndexOf('/') + 1); // ファイル名を表示
+        link.textContent = url.substring(url.lastIndexOf('/') + 1);
         link.target = '_blank';
-        
+
         linkItem.appendChild(link);
         linksContainer.appendChild(linkItem);
-
-        // リンクの読み込み確認
-        let img = new Image();
-        img.src = url;
-        img.onload = () => link.classList.add('loaded');
-        img.onerror = () => link.classList.add('error');
     });
 });
