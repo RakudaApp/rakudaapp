@@ -22,11 +22,12 @@ document.getElementById('displayButton').addEventListener('click', function() {
         alert('ファイル名が無効です');
         return;
     }
-    const fileNamePrefix = fileNameParts[1];
+    const fileNamePrefix = parseInt(fileNameParts[1], 10);
     const fileNameExtension = fileNameParts[2];
 
-    for (let i = 1; i <= numInput; i++) {
-        urls.push(baseUrl + (parseInt(fileNamePrefix, 10) + i - 1) + fileNameExtension);
+    for (let i = 0; i < numInput; i++) {
+        const currentNumber = fileNamePrefix + i;
+        urls.push(baseUrl + currentNumber + fileNameExtension);
     }
 
     urls.forEach(url => {
