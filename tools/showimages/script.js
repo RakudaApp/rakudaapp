@@ -30,13 +30,13 @@ document.getElementById('displayButton').addEventListener('click', function() {
         urls.push(baseUrl + currentNumber + fileNameExtension);
     }
 
-    urls.forEach(url => {
+    urls.forEach((url, index) => {
         const linkItem = document.createElement('div');
         linkItem.className = 'link-item';
 
         const link = document.createElement('a');
         link.href = url;
-        link.textContent = url.substring(url.lastIndexOf('/') + 1);
+        link.textContent = fileNamePrefix + index; // テキストを番号に合わせる
         link.target = '_blank';
 
         linkItem.appendChild(link);
